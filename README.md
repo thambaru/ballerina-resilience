@@ -42,8 +42,8 @@ public function main() returns error? {
 - Optional `ResilienceListener` hooks observe retries and circuit transitions; listeners must return quickly and not panic.
 
 ## Safe defaults and warnings
-- Retries target network errors and 5xx (and 429) responses only.
-- Non-idempotent calls (e.g., POST) do not retry unless explicitly allowed.
+- Retries target network errors and `5xx` (and `429`) responses only.
+- Non-idempotent calls (e.g., `POST`) do not retry unless explicitly allowed.
 - Circuit breaker state is per client instance; there is no global mutable state.
 - Errors are returned as values (`ResilienceError`) and never panicked.
 
