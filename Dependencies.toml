@@ -328,6 +328,7 @@ dependencies = [
 	{org = "ballerina", name = "time"}
 ]
 modules = [
-	{org = "thambaru", packageName = "resilience", moduleName = "resilience"}
+	{org = "thambaru", packageName = "resilience", moduleName = "resilience"},
+	{org = "thambaru", packageName = "resilience", moduleName = "resilience.utils"}
 ]
 

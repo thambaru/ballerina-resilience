@@ -1,5 +1,6 @@
 import ballerina/http;
 import ballerina/test;
+import resilience.utils;
 
 listener http:Listener testListener = new (9091);
 
@@ -44,13 +45,13 @@ service /sim on testListener {
 
 @test:Config {}
 function testRetryCompletesAfterTransientFailures() returns error? {
-    ResilienceConfig cfg = {
+    utils:ResilienceConfig cfg = {
         'retry: { maxAttempts: 3, initialDelayMillis: 10, maxDelayMillis: 20, jitter: false },
         circuitBreaker: { failureThreshold: 4, successThreshold: 1, openTimeoutMillis: 200 },
         timeout: { requestTimeoutMillis: 2000 }
     };
 
-    ResilientClient resilientClient = check newResilientClient("http://localhost:9091/sim", cfg);
+    utils:ResilientClient resilientClient = check newResilientClient("http://localhost:9091/sim", cfg);
     var result = resilientClient.get("/flaky");
     test:assertTrue(result is http:Response, msg = "Expected http response after retries");
     if result is http:Response {
@@ -63,20 +64,20 @@ function testCircuitOpensAndFailsFast() returns error? {
     lock {
         flakyCounter = 0;
     }
-    ResilienceConfig cfg = {
+    utils:ResilienceConfig cfg = {
         'retry: { maxAttempts: 1 },
         circuitBreaker: { failureThreshold: 1, successThreshold: 1, openTimeoutMillis: 500 },
         timeout: { requestTimeoutMillis: 2000 }
     };
 
-    ResilientClient|ResilienceError clientOrError = newResilientClient("http://localhost:9091/sim", cfg);
-    test:assertFalse(clientOrError is ResilienceError, msg = "Client creation failed");
-    ResilientClient resilientClient = check clientOrError;
+    utils:ResilientClient|utils:ResilienceError clientOrError = newResilientClient("http://localhost:9091/sim", cfg);
+    test:assertFalse(clientOrError is utils:ResilienceError, msg = "Client creation failed");
+    utils:ResilientClient resilientClient = check clientOrError;
 
     var first = resilientClient.get("/alwaysFail");
     test:assertTrue(first is http:Response);
     var second = resilientClient.get("/alwaysFail");
-    test:assertTrue(second is CircuitOpenError, msg = "Circuit should be open and reject calls");
+    test:assertTrue(second is utils:CircuitOpenError, msg = "Circuit should be open and reject calls");
 }
 
 @test:Config {}
@@ -84,13 +85,13 @@ function testNonIdempotentDoesNotRetryByDefault() returns error? {
     lock {
         postCounter = 0;
     }
-    ResilienceConfig cfg = {
+    utils:ResilienceConfig cfg = {
         'retry: { maxAttempts: 3 },
         circuitBreaker: { failureThreshold: 2, successThreshold: 1, openTimeoutMillis: 200 },
         timeout: { requestTimeoutMillis: 1000 }
     };
 
-    ResilientClient resilientClient = check newResilientClient("http://localhost:9091/sim", cfg);
+    utils:ResilientClient resilientClient = check newResilientClient("http://localhost:9091/sim", cfg);
     var resp = resilientClient.post("/record", { name: "demo" });
     int count;
     lock {

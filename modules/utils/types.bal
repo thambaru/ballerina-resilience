@@ -1,5 +1,12 @@
 import ballerina/http;
 
+# # Timeout configuration (per-request) in milliseconds.
+# Sets the maximum duration for each HTTP request.
+# + requestTimeoutMillis - Timeout for each request (ms).
+public type TimeoutConfig record {
+    int requestTimeoutMillis = 5000;
+};
+
 # # Retry configuration applied to idempotent calls by default.
 # Controls retry attempts, backoff, and jitter.
 # + maxAttempts - Maximum number of retry attempts.
@@ -17,6 +24,16 @@ public type RetryConfig record {
     boolean allowRetryOnNonIdempotent = false;
 };
 
+# # Optional hooks to observe resilience lifecycle events.
+# Implement to receive notifications on retry and circuit breaker state changes.
+# All methods are optional and must not block or panic.
+public type ResilienceListener isolated object {
+    isolated function onRetry(int attempt);
+    isolated function onCircuitOpen();
+    isolated function onCircuitHalfOpen();
+    isolated function onCircuitClose();
+};
+
 # # Circuit breaker configuration controlling failure thresholds and recovery.
 # Determines when the circuit opens, closes, and recovers.
 # + failureThreshold - Number of failures to open the circuit.
@@ -26,13 +43,6 @@ public type CircuitBreakerConfig record {
     int failureThreshold = 5;
     int successThreshold = 2;
     int openTimeoutMillis = 10000;
-};
-
-# # Timeout configuration (per-request) in milliseconds.
-# Sets the maximum duration for each HTTP request.
-# + requestTimeoutMillis - Timeout for each request (ms).
-public type TimeoutConfig record {
-    int requestTimeoutMillis = 5000;
 };
 
 # # Aggregate resilience configuration for a resilient HTTP client.
@@ -46,16 +56,6 @@ public type ResilienceConfig record {
     CircuitBreakerConfig circuitBreaker = {};
     TimeoutConfig timeout = {};
     ResilienceListener? 'listener = ();
-};
-
-# # Optional hooks to observe resilience lifecycle events.
-# Implement to receive notifications on retry and circuit breaker state changes.
-# All methods are optional and must not block or panic.
-public type ResilienceListener isolated object {
-    isolated function onRetry(int attempt);
-    isolated function onCircuitOpen();
-    isolated function onCircuitHalfOpen();
-    isolated function onCircuitClose();
 };
 
 # # Public resilient HTTP client API mirroring http:Client verbs.
