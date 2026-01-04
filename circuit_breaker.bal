@@ -16,7 +16,10 @@ public isolated class CircuitBreaker {
         self.resilienceListener = resilienceListener;
     }
 
-    # Verify if the next call is permitted. Handles time-based transition to HALF_OPEN.
+    # # Verifies if the next call is permitted by the circuit breaker.
+    # Handles time-based transition from OPEN to HALF_OPEN state.
+    # + nowMillis - The current monotonic time in milliseconds.
+    # + return - True if the call is allowed, else false.
     public function isCallPermitted(int nowMillis) returns boolean {
         lock {
             if self.state == CIRCUIT_OPEN {
@@ -47,7 +50,8 @@ public isolated class CircuitBreaker {
         }
     }
 
-    # Record a successful call and handle state transitions.
+    # # Records a successful call and manages state transitions.
+    # In HALF_OPEN, increments success count and closes circuit if threshold is met.
     public function recordSuccess() {
         lock {
             if self.state == CIRCUIT_HALF_OPEN {
@@ -63,7 +67,9 @@ public isolated class CircuitBreaker {
         }
     }
 
-    # Record a failure and open the circuit immediately after threshold breach.
+    # # Records a failed call and opens the circuit if failure threshold is breached.
+    # In HALF_OPEN, immediately opens the circuit on any failure.
+    # + nowMillis - The current monotonic time in milliseconds.
     public function recordFailure(int nowMillis) {
         lock {
             if self.state == CIRCUIT_HALF_OPEN {
@@ -78,6 +84,9 @@ public isolated class CircuitBreaker {
         }
     }
 
+    # # Opens the circuit and records the open time.
+    # Notifies listener if present.
+    # + nowMillis - The current monotonic time in milliseconds.
     private isolated function openCircuit(int nowMillis) {
         lock {
             self.state = CIRCUIT_OPEN;
@@ -91,6 +100,8 @@ public isolated class CircuitBreaker {
         }
     }
 
+    # # Closes the circuit and resets counters.
+    # Notifies listener if present.
     private isolated function closeCircuit() {
         lock {
             self.state = CIRCUIT_CLOSED;

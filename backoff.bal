@@ -1,4 +1,8 @@
-# Calculate the next backoff delay in milliseconds with optional jitter.
+# # Calculates the next backoff delay in milliseconds, applying optional jitter if enabled.
+# Used for retry strategies to determine wait time before the next attempt.
+# + config - The retry configuration parameters.
+# + attempt - The current retry attempt number (1-based).
+# + return - The computed delay in milliseconds for the next retry.
 public function calculateDelayMillis(RetryConfig config, int attempt) returns int {
     if attempt <= 1 {
         return config.initialDelayMillis;
@@ -21,6 +25,11 @@ public function calculateDelayMillis(RetryConfig config, int attempt) returns in
     return applyDeterministicJitter(cappedDelay, attempt);
 }
 
+# # Applies deterministic jitter to a base delay value for retry backoff.
+# Jitter helps to avoid thundering herd problems by randomizing retry delays.
+# + baseDelay - The base delay in milliseconds before jitter.
+# + salt - A value (typically the attempt number) to vary the jitter per attempt.
+# + return - The jittered delay in milliseconds (always positive).
 function applyDeterministicJitter(int baseDelay, int salt) returns int {
     if baseDelay <= 1 {
         return baseDelay;
